@@ -331,11 +331,12 @@
 				
 				await this.getStore()
 				this.goods = await getCategoryAndGoods()
+				const storageCart = uni.getStorageSync('cart') || []
 				if(!this.isLogin){
-					this.cart = uni.getStorageSync('cart') || []
+					this.cart = storageCart
 				}else{
-					let carts = await cartListPage()
-					this.cart = carts || []
+					const serverCarts = await cartListPage() || []
+					this.cart = serverCarts.concat(storageCart)
 				}
 				this.loading = false
 			},
@@ -405,10 +406,12 @@
 						return item.id === good.id
 					}
 				})
+				let cartItem
 				if (index > -1) {
 					this.cart[index].number += num
+					cartItem = this.cart[index]
 				} else {
-					this.cart.push({
+					cartItem = {
 						id: good.id,
 						cate_id: cate.id,
 						name: good.name,
@@ -417,16 +420,17 @@
 						image: good.images,
 						use_property: good.use_property,
 						props_text: good.props_text
-					})
+					}
 				}
-				console.log(this.isLogin)
 				// 异步执行添加购物车数据到服务端
 				if(this.isLogin){
 					const addCar = async () =>{
-						console.log('执行了!!!!!')
-						addToCart(this.cart)
+						addToCart(cartItem)
 					}
 					addCar()
+				}else{
+					this.cart.push(cartItem)
+					uni.setStorageSync('cart', JSON.parse(JSON.stringify(this.cart)))
 				}
 			},
 			handleReduceFromCart(item, good) {

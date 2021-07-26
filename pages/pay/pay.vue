@@ -193,6 +193,9 @@
 	import {
 		addToCart,cartListPage,clearCart
 	} from '@/request/api-cart.js'
+	import {
+		prepayment,submitOrder
+	} from '@/request/api-order.js'
 	export default {
 		components: {
 			listCell,
@@ -242,19 +245,33 @@
 				})
 			},
 			submit() {
-				if(this.orderType == 'takeout') {
-					this.ensureAddressModalVisible = true
-				} else {
-					this.pay()
-				}
+				// if(this.orderType == 'takeout') {
+				// 	this.ensureAddressModalVisible = true
+				// } else {
+				// 	const preRes = await this.prepayment()
+				// 	this.pay(preRes.data)
+				// }
+				const preRes = await this.prepayment()
+				this.pay(preRes.data)
 			},
-			pay() {
+			pay(token) {
 				uni.showLoading({title: '加载中'})
+				const orderVo = {
+					order_type: this.orderType,
+					pay_mode: 1,
+					tenant_id: this.store.id,
+					address_id: this.addresses.id,
+					discount_id: [],
+					postscript: this.form.remark,
+					mobile: this.mobile,
+					orderToken: token
+				}
 				//测试订单
-				let order = this.orderType == 'takein' ? orders[0] : orders[1]
-				order = Object.assign(order, {status: 1})
-				console.log(JSON.stringify(order))
-				this.SET_ORDER(order)
+				// let order = this.orderType == 'takein' ? orders[0] : orders[1]
+				// order = Object.assign(order, {status: 1})
+				// console.log(JSON.stringify(order))
+				// this.SET_ORDER(order)
+				const res = await this.submitOrder(orderVo)
 				uni.removeStorageSync('cart')
 				clearCart()
 				uni.reLaunch({
